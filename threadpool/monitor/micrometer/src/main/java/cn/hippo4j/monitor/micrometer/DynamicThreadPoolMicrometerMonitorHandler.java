@@ -17,12 +17,15 @@
 
 package cn.hippo4j.monitor.micrometer;
 
+import cn.hippo4j.common.extension.spi.ServiceLoaderRegistry;
 import cn.hippo4j.core.config.ApplicationContextHolder;
 import cn.hippo4j.common.model.ThreadPoolRunStateInfo;
 import cn.hippo4j.common.toolkit.BeanUtil;
 import cn.hippo4j.common.toolkit.CollectionUtil;
+import cn.hippo4j.core.executor.state.ThreadPoolRunStateHandler;
 import cn.hippo4j.monitor.base.AbstractDynamicThreadPoolMonitor;
-import cn.hippo4j.monitor.base.MonitorTypeEnum;
+import cn.hippo4j.threadpool.monitor.api.ThreadPoolMonitor;
+import cn.hippo4j.threadpool.monitor.support.MonitorTypeEnum;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tag;
 import org.springframework.core.env.Environment;
@@ -42,6 +45,14 @@ public class DynamicThreadPoolMicrometerMonitorHandler extends AbstractDynamicTh
     private static final String APPLICATION_NAME_TAG = "application.name";
 
     private final Map<String, ThreadPoolRunStateInfo> runStateCache = new ConcurrentHashMap<>();
+
+    public DynamicThreadPoolMicrometerMonitorHandler(ThreadPoolRunStateHandler handler) {
+        super(handler);
+    }
+
+    static {
+        ServiceLoaderRegistry.register(ThreadPoolMonitor.class);
+    }
 
     @Override
     protected void execute(ThreadPoolRunStateInfo poolRunStateInfo) {

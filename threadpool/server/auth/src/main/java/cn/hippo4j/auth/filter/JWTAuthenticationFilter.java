@@ -19,26 +19,31 @@ package cn.hippo4j.auth.filter;
 
 import cn.hippo4j.auth.model.biz.user.JwtUser;
 import cn.hippo4j.auth.model.biz.user.LoginUser;
+import cn.hippo4j.auth.toolkit.AESUtil;
 import cn.hippo4j.auth.toolkit.JwtTokenUtil;
 import cn.hippo4j.auth.toolkit.ReturnT;
 import cn.hippo4j.common.toolkit.JSONUtil;
 import cn.hippo4j.server.common.base.Results;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.codec.DecodingException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.security.GeneralSecurityException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,11 +62,18 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
     private final ThreadLocal<Integer> rememberMe = new ThreadLocal();
 
+    private UserDetailsService userDetailsService;
+
     public JWTAuthenticationFilter(AuthenticationManager authenticationManager) {
         this.authenticationManager = authenticationManager;
         super.setFilterProcessesUrl(BASE_PATH + "/auth/login");
     }
 
+    public void setLdapUserDetailsService(UserDetailsService userDetailsServiceImpl) {
+        this.userDetailsService = userDetailsServiceImpl;
+    }
+
+    @SneakyThrows
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request,
                                                 HttpServletResponse response) throws AuthenticationException {
@@ -69,10 +81,18 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         Authentication authenticate = null;
         try {
             LoginUser loginUser = new ObjectMapper().readValue(request.getInputStream(), LoginUser.class);
+            String key = new StringBuffer(loginUser.getTag()).reverse().toString();
+            String password = AESUtil.decrypt(loginUser.getPassword(), key);
+            loginUser.setPassword(password);
+
             request.setAttribute("loginUser", loginUser);
             rememberMe.set(loginUser.getRememberMe());
-            authenticate = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginUser.getUsername(), loginUser.getPassword(), new ArrayList()));
+            UserDetails userDetails = userDetailsService.loadUserByUsername(loginUser.getUsername());
+            authenticate = new PreAuthenticatedAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+
+        } catch (GeneralSecurityException e) {
+            log.warn("Password decode exception: {}", e.getMessage());
+            throw new DecodingException(e.getMessage());
         } catch (UsernameNotFoundException e) {
             log.warn("User {} not found", e.getMessage());
             throw e;

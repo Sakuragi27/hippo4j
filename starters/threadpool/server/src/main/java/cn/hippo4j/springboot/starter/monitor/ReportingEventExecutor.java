@@ -17,21 +17,21 @@
 
 package cn.hippo4j.springboot.starter.monitor;
 
-import cn.hippo4j.core.config.ApplicationContextHolder;
 import cn.hippo4j.common.executor.ThreadFactoryBuilder;
-import cn.hippo4j.common.monitor.Message;
+import cn.hippo4j.common.executor.ThreadPoolExecutorRegistry;
 import cn.hippo4j.common.extension.spi.ServiceLoaderRegistry;
+import cn.hippo4j.common.monitor.Message;
 import cn.hippo4j.common.toolkit.CollectionUtil;
 import cn.hippo4j.common.toolkit.StringUtil;
 import cn.hippo4j.common.toolkit.ThreadUtil;
-import cn.hippo4j.core.executor.manage.GlobalThreadPoolManage;
-import cn.hippo4j.monitor.base.MonitorTypeEnum;
-import cn.hippo4j.monitor.base.ThreadPoolMonitor;
+import cn.hippo4j.core.config.ApplicationContextHolder;
+import cn.hippo4j.threadpool.monitor.support.MonitorTypeEnum;
 import cn.hippo4j.springboot.starter.config.BootstrapProperties;
 import cn.hippo4j.springboot.starter.config.MonitorProperties;
 import cn.hippo4j.springboot.starter.monitor.collect.Collector;
 import cn.hippo4j.springboot.starter.monitor.send.MessageSender;
 import cn.hippo4j.springboot.starter.remote.ServerHealthCheck;
+import cn.hippo4j.threadpool.monitor.api.ThreadPoolMonitor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -45,11 +45,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import static cn.hippo4j.core.executor.manage.GlobalThreadPoolManage.getThreadPoolNum;
 
 /**
  * Dynamic thread pool collection and reporting event executor.
@@ -60,13 +59,10 @@ import static cn.hippo4j.core.executor.manage.GlobalThreadPoolManage.getThreadPo
 @RequiredArgsConstructor
 public class ReportingEventExecutor implements Runnable, CommandLineRunner, DisposableBean {
 
-    @NonNull
     private final BootstrapProperties properties;
 
-    @NonNull
     private final MessageSender messageSender;
 
-    @NonNull
     private final ServerHealthCheck serverHealthCheck;
 
     /**
@@ -90,6 +86,10 @@ public class ReportingEventExecutor implements Runnable, CommandLineRunner, Disp
      * it delays for a period of time to collect the running data of the dynamic thread pool.
      */
     private ScheduledThreadPoolExecutor collectVesselExecutor;
+
+    static {
+        ServiceLoaderRegistry.register(ThreadPoolMonitor.class);
+    }
 
     @SneakyThrows
     @Override
@@ -138,14 +138,14 @@ public class ReportingEventExecutor implements Runnable, CommandLineRunner, Disp
                     properties.getCollectInterval(),
                     TimeUnit.MILLISECONDS);
             Integer bufferSize = properties.getTaskBufferSize();
-            messageCollectVessel = new ArrayBlockingQueue(bufferSize);
+            messageCollectVessel = new LinkedBlockingQueue(bufferSize);
             // Get all data collection components, currently only historical operation data collection.
             collectors = ApplicationContextHolder.getBeansOfType(Collector.class);
             // Start reporting monitoring data thread.
             ThreadUtil.newThread(this, "client.thread.reporting.task", Boolean.TRUE).start();
         }
-        if (GlobalThreadPoolManage.getThreadPoolNum() > 0) {
-            log.info("Dynamic thread pool: [{}]. The dynamic thread pool starts data collection and reporting.", getThreadPoolNum());
+        if (ThreadPoolExecutorRegistry.getThreadPoolExecutorSize() > 0) {
+            log.info("Dynamic thread pool: [{}]. The dynamic thread pool starts data collection and reporting.", ThreadPoolExecutorRegistry.getThreadPoolExecutorSize());
         }
     }
 

@@ -128,6 +128,7 @@ import * as user from '@/api/hippo4j-user';
 import waves from '@/directive/waves';
 import Pagination from '@/components/Pagination';
 import * as tenantApi from '@/api/hippo4j-tenant';
+
 export default {
   name: 'User',
   components: { Pagination },
@@ -174,6 +175,7 @@ export default {
         password: '',
         permission: '',
         resources: [],
+        tempResources: [],
       },
       resetTemp() {
         this.temp = {
@@ -183,6 +185,7 @@ export default {
           password: '',
           permission: '',
           resources: [],
+          tempResources: [],
         }
       },
     };
@@ -229,6 +232,14 @@ export default {
     createData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
+          let resources = [];
+          for (let i = 0; i < this.temp.tempResources.length; i++) {
+            resources.push({
+              resource: this.temp.tempResources[i],
+              action: 'rw',
+            });
+          }
+          this.temp.resources = resources;
           user.createUser(this.temp).then(() => {
             this.fetchData();
             this.dialogFormVisible = false;

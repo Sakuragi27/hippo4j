@@ -23,7 +23,7 @@ const config = {
   // metadata like html lang. For example, if your site is Chinese, you may want
   // to replace "en" with "zh-Hans".
   i18n: {
-    defaultLocale: 'en',
+    defaultLocale: 'zh',
     locales: ['en', 'zh'],
     localeConfigs: {
       en: {
@@ -46,7 +46,8 @@ const config = {
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
-          sidebarCollapsed: false,
+          // Do not automatically expand the menu
+          sidebarCollapsed: true,
           /*editUrl: 'https://github.com/longtai-cn',*/
         },
         blog: {
@@ -73,6 +74,17 @@ const config = {
         sidebarPath: require.resolve('./sidebarsCommunity.js'),
       },
     ],
+    async function myPlugin(context, options) {
+      return {
+        name: 'docusaurus-tailwindcss',
+        configurePostCss(postcssOptions) {
+          // Appends TailwindCSS and AutoPrefixer.
+          postcssOptions.plugins.push(require('tailwindcss'));
+          postcssOptions.plugins.push(require('autoprefixer'));
+          return postcssOptions;
+        },
+      };
+    },
   ],
 
   themeConfig:
@@ -81,10 +93,11 @@ const config = {
       autoCollapseCategories: true,
       announcementBar: {
         id: 'announcementBar-1', // Increment on change
-        // content: `⭐️ If you like hippo4j, give it a star on <a target="_blank" rel="noopener noreferrer" href="https://gitee.com/mabaiwancn/hippo4j">Gitee</a>, thanks.`,
-        // content: `⭐️ 如果您喜欢 hippo4j，请在 <a target="_blank" rel="noopener noreferrer" href="https://gitee.com/mabaiwancn/hippo4j">Gitee</a> 和 <a target="_blank" rel="noopener noreferrer" href="https://github.com/opengoofy/hippo4j">GitHub</a> 上给它一个 star，谢谢！`,
-        content: `⭐️ 开源不易，如果 Hippo4j 对您有帮助，请在 <a target="_blank" rel="noopener noreferrer" href="https://github.com/opengoofy/hippo4j">GitHub</a> 上给它一个 Star 🌟`,
-        // content: `<a target="_blank" rel="noopener noreferrer" href="https://xiaomage.info/knowledge-planet/">👉 《小马哥的代码实战课》官方知识星球来啦！！！</a>`,
+        content:
+          '⭐️ If you like hippo4j, give it a star on <a target="_blank" rel="noopener noreferrer" href="https://github.com/opengoofy/hippo4j">GitHub</a> ⭐️',
+        backgroundColor: '#fafbfc',
+        textColor: '#091E42',
+        isCloseable: false,
       },
       navbar: {
         title: '',
@@ -116,8 +129,8 @@ const config = {
             position: 'left',
           },
           {
-            href: 'https://gitee.com/opengoofy/congomall',
-            label: '👉 刚果商城',
+            href: 'https://magestack.cn',
+            label: '🚀 拿个offer',
             position: 'left',
           },
           {
@@ -128,10 +141,10 @@ const config = {
 
           { type: 'localeDropdown', position: 'right' },
           /*{
-                        href: 'https://gitee.com/mabaiwancn/hippo4j',
-                        label: 'Gitee',
-                        position: 'right',
-                    },*/
+                                  href: 'https://gitee.com/mabaiwancn/hippo4j',
+                                  label: 'Gitee',
+                                  position: 'right',
+                              },*/
           {
             href: 'https://github.com/opengoofy/hippo4j',
             className: 'header-github-link',
@@ -140,10 +153,10 @@ const config = {
           },
 
           /*{
-                        href: 'https://github.com/opengoofy/hippo4j',
-                        label: 'GitHub',
-                        position: 'right',
-                    },*/
+                                  href: 'https://github.com/opengoofy/hippo4j',
+                                  label: 'GitHub',
+                                  position: 'right',
+                              },*/
         ],
       },
       footer: {
@@ -196,17 +209,13 @@ const config = {
             title: 'Links',
             items: [
               {
-                label: '书源',
-                href: 'https://bookyuan.cn/',
-              },
-              {
                 label: '推广合作',
                 href: 'https://hippo4j.cn/docs/user_docs/other/operation',
               },
             ],
           },
         ],
-        copyright: `Copyright © 2021-2022 马丁版权所有 <a href="https://beian.miit.gov.cn">京ICP备2021038095号
+        copyright: `Copyright © 2021-2023 马丁版权所有 <a href="https://beian.miit.gov.cn">京ICP备2021038095号
 </a>`,
       },
       prism: {

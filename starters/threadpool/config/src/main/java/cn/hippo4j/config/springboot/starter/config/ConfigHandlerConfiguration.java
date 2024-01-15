@@ -17,15 +17,9 @@
 
 package cn.hippo4j.config.springboot.starter.config;
 
-import cn.hippo4j.config.springboot.starter.refresher.ApolloRefresherHandler;
-import cn.hippo4j.config.springboot.starter.refresher.BootstrapConfigPropertiesBinderAdapt;
-import cn.hippo4j.config.springboot.starter.refresher.ConsulRefresherHandler;
-import cn.hippo4j.config.springboot.starter.refresher.DefaultBootstrapConfigPropertiesBinderAdapt;
-import cn.hippo4j.config.springboot.starter.refresher.EtcdRefresherHandler;
-import cn.hippo4j.config.springboot.starter.refresher.NacosCloudRefresherHandler;
-import cn.hippo4j.config.springboot.starter.refresher.NacosRefresherHandler;
-import cn.hippo4j.config.springboot.starter.refresher.PolarisRefresherHandler;
-import cn.hippo4j.config.springboot.starter.refresher.ZookeeperRefresherHandler;
+import cn.hippo4j.config.springboot.starter.refresher.*;
+import cn.hippo4j.threadpool.dynamic.mode.config.properties.BootstrapConfigProperties;
+import cn.hippo4j.threadpool.dynamic.mode.config.refresher.BootstrapConfigPropertiesBinderAdapter;
 import com.alibaba.cloud.nacos.NacosConfigProperties;
 import com.alibaba.nacos.api.config.ConfigService;
 import com.tencent.polaris.configuration.api.core.ConfigFileService;
@@ -44,6 +38,7 @@ import org.springframework.context.annotation.Configuration;
  * Config handler configuration.
  */
 @Configuration(proxyBeanMethods = false)
+@ConditionalOnProperty(prefix = BootstrapConfigProperties.PREFIX, value = "enable", matchIfMissing = true, havingValue = "true")
 public class ConfigHandlerConfiguration {
 
     private static final String NACOS_CONFIG_MANAGER_KEY = "com.alibaba.cloud.nacos.NacosConfigManager";
@@ -64,8 +59,8 @@ public class ConfigHandlerConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public BootstrapConfigPropertiesBinderAdapt bootstrapConfigPropertiesBinderAdapt() {
-        return new DefaultBootstrapConfigPropertiesBinderAdapt();
+    public BootstrapConfigPropertiesBinderAdapter bootstrapConfigPropertiesBinderAdapter() {
+        return new DefaultBootstrapConfigPropertiesBinderAdapter();
     }
 
     /**

@@ -31,11 +31,30 @@ public interface ThreadPoolDynamicRefresh {
     }
 
     /**
+     * Build thread-pool bootstrap properties.
+     *
+     * @param configInfo changed configuration properties
+     * @return bootstrap properties
+     */
+    default BootstrapPropertiesInterface buildBootstrapProperties(Map<Object, Object> configInfo) {
+        return null;
+    }
+
+    /**
      * Dynamic refresh of configuration center data changes.
      *
      * @param content changed data
      */
     default void dynamicRefresh(String content) {
+    }
+
+    /**
+     * Dynamic refresh of configuration center data changes.
+     *
+     * @param configFileType config file type
+     * @param content        changed data
+     */
+    default void dynamicRefresh(String configFileType, String content) {
     }
 
     /**
@@ -45,5 +64,15 @@ public interface ThreadPoolDynamicRefresh {
      * @param newValueChangeMap new value change map
      */
     default void dynamicRefresh(String content, Map<String, Object> newValueChangeMap) {
+    }
+
+    /**
+     * Dynamic refresh.
+     *
+     * @param configFileType    config file type
+     * @param content           changed data
+     * @param newValueChangeMap new value change map
+     */
+    default void dynamicRefresh(String configFileType, String content, Map<String, Object> newValueChangeMap) {
     }
 }
